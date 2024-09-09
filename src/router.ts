@@ -2,17 +2,26 @@
 
 import { match } from 'path-to-regexp';
 
-type RouteHandler = <CfHostMetadata = unknown>(
-	params: Partial<Record<string, string | string[]>>,
+type ExtractRouteParams<T extends string> = string extends T
+	? Record<string, string>
+	: T extends `${infer _Start}:${infer Param}/${infer Rest}`
+	? { [K in Param | keyof ExtractRouteParams<Rest>]: string }
+	: T extends `${infer _Start}:${infer Param}`
+	? { [K in Param]: string }
+	: {};
+
+type RouteHandler<Path extends string> = <CfHostMetadata = unknown>(
+	params: ExtractRouteParams<Path>,
 	request: Request<CfHostMetadata, IncomingRequestCfProperties<CfHostMetadata>>,
 	env: Env,
 	ctx: ExecutionContext
 ) => Response | Promise<Response>;
-type Route = [string, RouteHandler];
+type Route<T extends string> = [T, RouteHandler<T>];
 type ErrorHandler = (error: unknown) => Response;
 
 export class Router {
-	routes: Record<string, Route[]> = {
+	// @hack
+	routes: Record<any, Route<any>[]> = {
 		GET: [],
 		POST: [],
 		PUT: [],
@@ -25,31 +34,31 @@ export class Router {
 		return new Response(errorMessage, { status: 500 });
 	};
 
-	before(handler: RouteHandler) {
+	before(handler: RouteHandler<string>) {
 		// Do something before the request is handled
 	}
 
-	get(path: string, handler: RouteHandler) {
+	get<T extends string>(path: T, handler: RouteHandler<T>) {
 		this.routes['GET'].push([path, handler]);
 	}
 
-	post(path: string, handler: RouteHandler) {
+	post<T extends string>(path: T, handler: RouteHandler<T>) {
 		this.routes['POST'].push([path, handler]);
 	}
 
-	put(path: string, handler: RouteHandler) {
+	put<T extends string>(path: T, handler: RouteHandler<T>) {
 		this.routes['PUT'].push([path, handler]);
 	}
 
-	delete(path: string, handler: RouteHandler) {
+	delete<T extends string>(path: T, handler: RouteHandler<T>) {
 		this.routes['DELETE'].push([path, handler]);
 	}
 
-	patch(path: string, handler: RouteHandler) {
+	patch<T extends string>(path: T, handler: RouteHandler<T>) {
 		this.routes['PATCH'].push([path, handler]);
 	}
 
-	options(path: string, handler: RouteHandler) {
+	options<T extends string>(path: T, handler: RouteHandler<T>) {
 		this.routes['OPTIONS'].push([path, handler]);
 	}
 
@@ -67,7 +76,8 @@ export class Router {
 			for (const [path, handler] of routes) {
 				const result = match(path)(url.pathname);
 				if (result !== false) {
-					return await handler(result.params, ...args);
+					// @hack
+					return await handler(result.params as any, ...args);
 				}
 			}
 		} catch (error) {

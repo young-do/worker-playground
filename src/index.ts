@@ -15,7 +15,6 @@ import { Router } from './router';
 const router = new Router();
 
 router.get('/:id', (params) => {
-	console.log('@@', params.id);
 	return new Response(`Hello from worker ${params.id}`);
 });
 

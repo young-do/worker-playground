@@ -1,3 +1,4 @@
+import authRouter from './auth';
 import { Router } from './lib/router';
 
 /**
@@ -12,12 +13,14 @@ import { Router } from './lib/router';
  *
  * Learn more at https://developers.cloudflare.com/workers/
  */
-const router = new Router();
+const rootRouter = new Router();
 
-router.get('/:id', (params) => {
+rootRouter.merge(authRouter, '/auth');
+
+rootRouter.get('/:id', (params) => {
 	return new Response(`Hello from worker ${params.id}`);
 });
 
 export default {
-	fetch: router.listen,
+	fetch: rootRouter.listen,
 } satisfies ExportedHandler<Env>;

@@ -86,4 +86,16 @@ export class Router {
 
 		return new Response('Not Found', { status: 404 });
 	};
+
+	merge(subRouter: Router, prefix = '/') {
+		for (const method in subRouter.routes) {
+			this.routes[method] = this.routes[method].concat(
+				subRouter.routes[method].map(([path, handler]) => [Router.combinePath(prefix, path), handler])
+			);
+		}
+	}
+
+	static combinePath(prefix: string, path: string) {
+		return '/' + `${prefix}/${path}`.split('/').filter(Boolean).join('/');
+	}
 }

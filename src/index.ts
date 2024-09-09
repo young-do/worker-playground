@@ -1,3 +1,5 @@
+import { Router } from './router';
+
 /**
  * Welcome to Cloudflare Workers! This is your first worker.
  *
@@ -10,9 +12,13 @@
  *
  * Learn more at https://developers.cloudflare.com/workers/
  */
+const router = new Router();
+
+router.get('/', async (...args) => {
+	console.log('@@', args);
+	throw new Error('Not implemented');
+});
 
 export default {
-	async fetch(request, env, ctx): Promise<Response> {
-		return new Response('Hello World!');
-	},
+	fetch: router.listen,
 } satisfies ExportedHandler<Env>;

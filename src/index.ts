@@ -1,4 +1,4 @@
-import { Router } from './router';
+import { Router } from './lib/router';
 
 /**
  * Welcome to Cloudflare Workers! This is your first worker.

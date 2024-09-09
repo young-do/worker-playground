@@ -1,6 +1,13 @@
 // inspired by https://github.com/jrf0110/8track
 
-type RouteHandler = ExportedHandlerFetchHandler<Env, unknown>;
+import { match } from 'path-to-regexp';
+
+type RouteHandler = <CfHostMetadata = unknown>(
+	params: Partial<Record<string, string | string[]>>,
+	request: Request<CfHostMetadata, IncomingRequestCfProperties<CfHostMetadata>>,
+	env: Env,
+	ctx: ExecutionContext
+) => Response | Promise<Response>;
 type Route = [string, RouteHandler];
 type ErrorHandler = (error: unknown) => Response;
 
@@ -56,14 +63,15 @@ export class Router {
 		const method = request.method;
 		const routes = this.routes[method] ?? [];
 
-		for (const [path, handler] of routes) {
-			if (url.pathname === path) {
-				try {
-					return await handler(...args);
-				} catch (error) {
-					return this.errorHandler(error);
+		try {
+			for (const [path, handler] of routes) {
+				const result = match(path)(url.pathname);
+				if (result !== false) {
+					return await handler(result.params, ...args);
 				}
 			}
+		} catch (error) {
+			return this.errorHandler(error);
 		}
 
 		return new Response('Not Found', { status: 404 });
